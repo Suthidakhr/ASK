@@ -1,5 +1,12 @@
 # Deferred Work Log
 
+## Deferred from: code review of 2-4-sentimentbadge-and-aiinsightbox-components (2026-06-21)
+
+- **D1: No runtime defense in SentimentBadge for unknown sentiment values** — `SENTIMENT_STYLES[unexpected]` returns `undefined`; destructuring throws a runtime crash if the API ever sends an unrecognized value (e.g. `"mixed"` or casing mismatch). TypeScript compile-time enforcement is currently the only guard. Add a `?? SENTIMENT_STYLES.neutral` fallback when the component is touched in a future token/cleanup pass.
+- **D2: `analysis_at` malformed or empty string → NaN → silent staleness suppression** — `new Date("").getTime()` returns `NaN`; `NaN > 86400000` is `false`, hiding the stale indicator. Pre-existing pattern — no other component validates API string fields. Address at the API boundary (Pydantic response schema) rather than in UI components.
+- **D3: Missing `aria-live="polite"` on AIInsightBox container** — Screen readers receive no announcement when the analysis transitions from pending to loaded. Currently moot because the component is a Server Component rendered via ISR — no client-side state transition occurs. If the component is ever refactored to use client-side polling/SWR, add `aria-live="polite"` to the container. Track in Story 2.9 WCAG audit.
+- **D4: Clock skew at 24h staleness boundary** — `Date.now()` is the client clock; `analysis_at` originates from the server. A small discrepancy could cause an analysis at exactly 24h to flip between stale/fresh on successive renders. Acceptable edge case for the current financial research use case. Resolve by adding a 5-minute tolerance buffer if this becomes a user-reported issue.
+
 ## Deferred from: code review of 2-3-navbar-bottomtabbar-and-layout-foundation (2026-06-21)
 
 - **D1: Hardcoded brand hex instead of Tailwind token** — `Navbar.tsx` and `BottomTabBar.tsx` use `style={{ backgroundColor: "#4A342A" }}` instead of `className="bg-espresso"`. The token exists in `tailwind.config.ts`; colour is visually correct but will diverge from the theme on future token changes. Migrate to `bg-espresso` when doing a broader component token audit.
