@@ -1,20 +1,24 @@
-from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
+from typing import Literal, Optional
+
+from pydantic import AwareDatetime, BaseModel, ConfigDict
 
 
 class StockImpact(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     symbol: str
-    direction: str  # "positive" | "negative" | "neutral"
+    direction: Literal["positive", "negative", "neutral"]
     reason: Optional[str] = None
 
 
 class NewsItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     title: str
     summary: str
     category: str
-    published_at: str
+    published_at: AwareDatetime
     source: str
     ai_analysis: str
     stock_impacts: list[StockImpact]
@@ -22,6 +26,8 @@ class NewsItem(BaseModel):
 
 
 class MarketIndex(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     name: str
     symbol: str
     price: float
@@ -31,19 +37,25 @@ class MarketIndex(BaseModel):
 
 
 class SectorPerformance(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     name: str
     change_pct: float
-    level: str  # strong_up | up | flat | down | strong_down
+    level: str
 
 
 class TrendItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     rank: int
     title: str
     description: str
-    sentiment: str  # bullish | bearish | neutral
+    sentiment: str
 
 
 class AISummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     date: str
     overview: str
     key_points: list[str]
@@ -54,6 +66,8 @@ class AISummary(BaseModel):
 
 
 class MarketOverview(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     indices: list[MarketIndex]
     sectors: list[SectorPerformance]
     trends: list[TrendItem]
