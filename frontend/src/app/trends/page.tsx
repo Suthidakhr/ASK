@@ -41,7 +41,7 @@ export default async function TrendsPage() {
         </div>
       </div>
 
-      <main className="max-w-screen-xl mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-screen-xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-5 items-start">
 
           {/* Trends + sentiment breakdown */}

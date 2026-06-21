@@ -30,7 +30,7 @@ export default async function NewsPage() {
         </div>
       </div>
 
-      <main className="max-w-3xl mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-3xl mx-auto px-4 py-6">
         <NewsFeed news={newsResponse.items} />
       </main>
 

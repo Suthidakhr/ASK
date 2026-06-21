@@ -32,3 +32,15 @@ body {
 .live-dot {
   animation: pulse-dot 2s ease-in-out infinite;
 }
+
+@layer utilities {
+  .pb-tab-safe {
+    padding-bottom: 3.5rem;
+  }
+
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .pb-tab-safe {
+      padding-bottom: calc(3.5rem + env(safe-area-inset-bottom));
+    }
+  }
+}

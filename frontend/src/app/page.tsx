@@ -48,7 +48,7 @@ export default async function HomePage() {
         </div>
       </div>
 
-      <main className="max-w-screen-xl mx-auto px-4 py-5">
+      <main id="main-content" className="max-w-screen-xl mx-auto px-4 py-5">
         {/* Search */}
         <div className="bg-white rounded-lg border flex items-center gap-3 px-4 py-2.5 mb-5"
           style={{ borderColor: "rgba(74,52,42,0.12)" }}>

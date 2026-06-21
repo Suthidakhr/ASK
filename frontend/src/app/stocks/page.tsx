@@ -33,7 +33,7 @@ export default async function StocksPage() {
         </div>
       </div>
 
-      <main className="max-w-screen-xl mx-auto px-4 py-6">
+      <main id="main-content" className="max-w-screen-xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div className="space-y-5">
             <MarketOverviewWidget indices={overview.indices} />

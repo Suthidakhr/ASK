@@ -1,5 +1,11 @@
 # Deferred Work Log
 
+## Deferred from: code review of 2-3-navbar-bottomtabbar-and-layout-foundation (2026-06-21)
+
+- **D1: Hardcoded brand hex instead of Tailwind token** — `Navbar.tsx` and `BottomTabBar.tsx` use `style={{ backgroundColor: "#4A342A" }}` instead of `className="bg-espresso"`. The token exists in `tailwind.config.ts`; colour is visually correct but will diverge from the theme on future token changes. Migrate to `bg-espresso` when doing a broader component token audit.
+- **D2: Navbar inactive tab opacity mismatch** — `Navbar.tsx` uses `rgba(255,255,255,0.5)` (50%) for inactive tabs; AC3 for BottomTabBar explicitly specifies 45% (`rgba(255,255,255,0.45)`). Minor visual inconsistency between nav surfaces. Align in a future design-token cleanup pass.
+- **D3: Potential z-index collision between BottomTabBar and N8nChat** — Both are `fixed` with `z-50`; the chat widget button could overlap the Trends tab on mobile. Requires checking `N8nChat` component's z-index and position before resolving.
+
 ## Deferred from: code review of 2-2-news-api-endpoints (2026-06-21)
 
 - **D1: Mock data expiry** — All `NEWS_DATA` items have hardcoded `published_at` dates around 2026-06-21; after 2026-06-28 the retention filter will silently return an empty list. Fix by anchoring mock dates relative to `datetime.now()` or using dynamic dates.
