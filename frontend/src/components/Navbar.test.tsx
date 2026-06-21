@@ -14,6 +14,14 @@ vi.mock('next/link', () => ({
 import Navbar from './Navbar'
 
 describe('Navbar', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+  afterEach(() => {
+    vi.clearAllTimers()
+    vi.useRealTimers()
+  })
+
   it('renders ASK brand name', () => {
     render(<Navbar />)
     expect(screen.getByText('ASK')).toBeInTheDocument()

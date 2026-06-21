@@ -1,4 +1,4 @@
-import { render, container } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import N8nChat from './N8nChat'
 
 describe('N8nChat', () => {

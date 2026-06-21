@@ -53,18 +53,21 @@ describe('NewsCard', () => {
   })
 
   it('renders positive stock impact badge with ▲ arrow', () => {
-    render(<NewsCard news={VALID_NEWS} />)
-    expect(screen.getByText('SPALI')).toBeInTheDocument()
+    render(<NewsCard news={{ ...VALID_NEWS, stock_impacts: [{ symbol: 'SPALI', direction: 'positive', reason: null }] }} />)
+    const badge = screen.getByText('SPALI').closest('span')
+    expect(badge).toHaveTextContent('▲')
   })
 
   it('renders neutral stock impact badge with – arrow', () => {
-    render(<NewsCard news={VALID_NEWS} />)
-    expect(screen.getByText('KBANK')).toBeInTheDocument()
+    render(<NewsCard news={{ ...VALID_NEWS, stock_impacts: [{ symbol: 'KBANK', direction: 'neutral', reason: null }] }} />)
+    const badge = screen.getByText('KBANK').closest('span')
+    expect(badge).toHaveTextContent('–')
   })
 
   it('renders negative stock impact badge with ▼ arrow', () => {
-    render(<NewsCard news={VALID_NEWS} />)
-    expect(screen.getByText('AAV')).toBeInTheDocument()
+    render(<NewsCard news={{ ...VALID_NEWS, stock_impacts: [{ symbol: 'AAV', direction: 'negative', reason: null }] }} />)
+    const badge = screen.getByText('AAV').closest('span')
+    expect(badge).toHaveTextContent('▼')
   })
 
   it('featured card applies camel left border style', () => {

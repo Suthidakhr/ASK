@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import NewsFeed from './NewsFeed'
 import { NewsItem } from '@/types'
 
-const makeNews = (overrides: Partial<NewsItem> & { id: string; category: string }): NewsItem => ({
+const makeNews = (overrides: Partial<NewsItem> & { id: string; category: NewsItem['category'] }): NewsItem => ({
   headline: `News ${overrides.id}`,
   summary: 'Summary text',
   source_url: 'https://example.com/article',
@@ -57,10 +57,15 @@ describe('NewsFeed', () => {
 
   it('shows empty message when selected category has no matches', async () => {
     const user = userEvent.setup()
-    const noMatch: NewsItem[] = [makeNews({ id: 'x', category: 'หุ้นไทย', headline: 'SET news' })]
-    render(<NewsFeed news={noMatch} />)
-    await user.click(screen.getByRole('button', { name: 'ทั้งหมด' }))
-    expect(screen.getByText('SET news')).toBeInTheDocument()
+    const initialNews = [
+      makeNews({ id: 'n1', category: 'พลังงาน', headline: 'Energy news' }),
+      makeNews({ id: 'n2', category: 'เทคโนโลยี', headline: 'Tech news' }),
+    ]
+    const { rerender } = render(<NewsFeed news={initialNews} />)
+    await user.click(screen.getByRole('button', { name: 'พลังงาน' }))
+    // Rerender with no พลังงาน items; active='พลังงาน' persists → filtered.length === 0
+    rerender(<NewsFeed news={[makeNews({ id: 'n3', category: 'เทคโนโลยี', headline: 'Tech only' })]} />)
+    expect(screen.getByText('ไม่พบข่าวในหมวดนี้')).toBeInTheDocument()
   })
 
   it('renders with empty news array without throwing', () => {

@@ -1,5 +1,5 @@
 ---
-status: review
+status: done
 epic: 1
 story: 2
 story_key: "1-2-frontend-testing-infrastructure"
@@ -9,7 +9,7 @@ baseline_commit: 2102fe960bc58dede49fd20cb9391c77c99be16f
 
 # Story 1.2: Frontend Testing Infrastructure
 
-Status: review
+Status: done
 
 ## Story
 
@@ -387,6 +387,21 @@ claude-sonnet-4-6
 **Modified files:**
 - `frontend/package.json` — added 7 devDependencies + 3 test scripts
 - `frontend/tsconfig.json` — added `"types": ["vitest/globals", "@testing-library/jest-dom"]`
+
+### Review Findings (2026-06-21)
+
+- [x] [Review][Patch] Dead `container` named import in N8nChat.test.tsx [frontend/src/components/N8nChat.test.tsx:1]
+- [x] [Review][Patch] "empty message" test does not exercise empty state [frontend/src/components/NewsFeed.test.tsx:58]
+- [x] [Review][Patch] Badge direction tests assert symbol only, not arrow direction [frontend/src/components/NewsCard.test.tsx:55]
+- [x] [Review][Patch] makeNews factory `category: string` bypasses union type [frontend/src/components/NewsFeed.test.tsx:6]
+- [x] [Review][Patch] Navbar setInterval never cleaned up — potential act() warnings [frontend/src/components/Navbar.test.tsx]
+- [x] [Review][Defer] api.test.ts error assertion is substring of full throw message [frontend/src/lib/api.test.ts:91] — deferred, pre-existing
+- [x] [Review][Defer] AISummaryCard has no edge-case data tests (empty arrays, missing range fields) — deferred, pre-existing
+- [x] [Review][Defer] TickerBar single-item doubling logic not tested — deferred, pre-existing
+- [x] [Review][Defer] TickerBar zero-change boundary (change===0 → ▲) not tested — deferred, pre-existing
+- [x] [Review][Defer] Navbar non-root pathname active-tab path never tested — deferred, pre-existing
+- [x] [Review][Defer] Coverage thresholds: only lines:80 enforced; branches/functions/statements unconfigured — deferred, pre-existing
+- [x] [Review][Defer] Vitest alias manually duplicated from tsconfig — will drift if tsconfig paths change — deferred, pre-existing
 
 ### Change Log
 
