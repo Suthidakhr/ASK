@@ -45,6 +45,11 @@
 - **D6: Coverage thresholds: only lines:80 enforced** — `branches`, `functions`, and `statements` thresholds are not configured. For a financial data app where conditional rendering (null analysis, featured flag, direction badges) is core behavior, branch coverage is more meaningful. Upgrade thresholds when the component suite is stable.
 - **D7: Vitest alias manually duplicated from tsconfig** — `vitest.config.ts` manually mirrors the `@/*` alias from `tsconfig.json`. Consider adding `vite-tsconfig-paths` as a devDependency to auto-sync, eliminating the drift risk.
 
+## Deferred from: code review of 2-8-home-page-layout-and-isr-configuration (2026-06-22)
+
+- **D13: Duplicate non-functional search inputs on home page** — `page.tsx` renders a decorative `<input type="text" aria-label="Search news, stocks, sectors">` (line 106) inside `<main>`, while `NewsFeed` (rendered inside `<HomeFeedServer>`) renders its own `<input type="search">`. Two near-identical inert search controls appear on the home page; screen readers announce both. Pre-existing in old `page.tsx` before Story 2.8. Address in a dedicated search feature story or Story 2.9 WCAG audit. `frontend/src/app/page.tsx:106 + frontend/src/components/NewsFeed.tsx:38`
+- **D14: `/trends` page calls `api.getMarketOverview()` without try/catch** — Unhandled rejection crashes the entire Trends page to the Next.js error boundary if the API is unavailable. Not introduced by Story 2.8; Story 2.8 hardened only `page.tsx`. Wrap in try/catch matching the pattern used in `MarketSidebarServer` in a future hardening story or during Story 2.9. `frontend/src/app/trends/page.tsx`
+
 ## Deferred from: code review of 2-7-news-detail-page (2026-06-22)
 
 - **D8: 404 detection via string matching in NewsDetailServer** — `err.message.includes("404")` is coupled to the `fetchAPI` error format string "API error: 404 /news/<id>". If the error format changes, 404s silently become 500s. Fix: introduce a typed `ApiError` class with a `statusCode: number` property in `api.ts` and check `err.statusCode === 404`. `src/app/news/[id]/page.tsx:15`
