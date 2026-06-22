@@ -1,5 +1,11 @@
 # Deferred Work Log
 
+## Deferred from: code review of 3-4-n8n-workflow-configuration-and-pipeline-validation (2026-06-22)
+
+- **D1: Automated script continues after Step 2 failure** — `fail()` returns exit 0; `set -e` does not abort. Step 3 runs for 5 minutes even when Step 2 already failed. The root-cause signal is diluted and the operator waits unnecessarily. Fix: add `&& exit 1` to the `fail "Article not in GET /news..."` call, or restructure with explicit `exit` after Step 2 failure. `docs/e2e-validation.md` automated script.
+- **D2: Step 5 count comparison has TOCTOU race** — `BEFORE`/`AFTER` counts use `GET /news` which is subject to concurrent n8n writes between the two calls. A real concurrent ingest can cause false fail (count increases) or mask a bug (concurrent ingest coincidentally hides a duplicate). Partially mitigated by `?limit=50` patch. A more robust approach: use `GET /news/{id}` to check only the test article's state instead of total count. `docs/e2e-validation.md` lines 134, 151, 254.
+- **D3: `ASK_BASE_URL` is a 4th env var not in the spec's three required** — The spec's Dev Notes list exactly three required env vars for n8n workflows. `ASK_BASE_URL` is an additional convenience variable for E2E validation tooling only. The spec gap is harmless since the variable is correctly scoped to `e2e-validation.md`, but the spec should be updated to reflect the actual env var count when next revised. `docs/n8n-setup.md` env vars table.
+
 ## Deferred from: code review of 3-3-ai-system-prompt-version-controlled-constraints (2026-06-22)
 
 - **D1: `test_prompt_file_exists` is redundant** — `from app.ai import prompts` at module level raises `ModuleNotFoundError` before `test_prompt_file_exists` is ever executed if `prompts.py` is deleted. The test provides no independent guard. Harmless today; consider replacing with `importlib.util.find_spec("app.ai.prompts")` pattern if file-existence independence matters. `backend/tests/ai/test_system_prompt.py:8`
