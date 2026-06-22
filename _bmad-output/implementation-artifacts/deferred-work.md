@@ -1,5 +1,13 @@
 # Deferred Work Log
 
+## Deferred from: code review of 2-6-news-feed-page-and-category-filter-bar (2026-06-22)
+
+- **D1: formatTime(error) invalid date risk** — `error: string | null` prop passed to `formatTime()` has no ISO date type constraint; a future caller passing a non-ISO string (e.g. an error message) would render "Invalid Date" in the error banner. Enforce with a branded type or rename the prop to `errorTimestamp`. `NewsFeed.tsx:70`
+- **D2: tabRefs.current not cleared on categories prop change** — Stale `HTMLButtonElement` refs at out-of-bounds indices persist when `categories` array shrinks. Currently safe because `CATEGORY_TABS` is a static constant, but a future dynamic prop could cause `focus()` calls on detached DOM nodes. `CategoryFilterBar.tsx:18`
+- **D3: isMarketHours() evaluated client-side in "use client" component** — Server and client clocks can differ by seconds, causing React 19 hydration mismatch near 09:00 or 18:00 Bangkok time. Fix by computing staleness server-side and passing the result as a prop, or adding `suppressHydrationWarning`. `NewsFeed.tsx:13`
+- **D4: app/page.tsx has no error handling around Promise.all** — Any single API failure (news, overview, ticker) crashes the entire home page to an error boundary. Story 2.6 hardened `news/page.tsx` but the home page was not updated. Address in a dedicated error resilience story. `src/app/page.tsx:11`
+- **D5: isMarketHours() ignores weekends** — SET market is Mon–Fri; staleness banner and empty-state copy ("Check back during market hours") can mislead on Saturdays/Sundays. Spec text says "09:00–18:00 Bangkok time" without weekday qualification — resolve the ambiguity before implementing a fix. `NewsFeed.tsx:13`
+
 ## Deferred from: code review of 2-5-newscard-component (2026-06-21)
 
 - **D1: `getByRole('link')` in NewsCard test has silent coupling to child component links** — `screen.getByRole('link')` (NewsCard.test.tsx line ~118) throws "Found multiple elements" if SentimentBadge or AIInsightBox ever renders an `<a>` element. Currently safe, but creates invisible brittleness. Resolve by adding `{ name: /เฟด/i }` filter or using `container.querySelector('a')` pattern.

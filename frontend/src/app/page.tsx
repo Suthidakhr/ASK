@@ -81,7 +81,12 @@ export default async function HomePage() {
                 View All →
               </a>
             </div>
-            <NewsFeed news={newsResponse.items} />
+            <NewsFeed
+                news={newsResponse.items}
+                last_updated={newsResponse.last_updated}
+                activeCategory="All"
+                error={null}
+              />
           </div>
 
           {/* Sidebar */}
