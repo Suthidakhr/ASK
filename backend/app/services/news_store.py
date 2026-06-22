@@ -8,7 +8,7 @@ from app.services.mock_data import NEWS_DATA
 class NewsStore:
     def __init__(self) -> None:
         self._lock = Lock()
-        self._items: list[dict] = list(NEWS_DATA)
+        self._items: list[dict] = [dict(item) for item in NEWS_DATA]
         self._url_index: dict[str, str] = {item["source_url"]: item["id"] for item in self._items}
         self._content_hashes: dict[str, str] = {
             self._hash(item["content"]): item["id"] for item in self._items
@@ -46,9 +46,18 @@ class NewsStore:
             self._content_hashes[content_hash] = event_id
             return (event_id, "created")
 
+    def attach_analysis(self, news_id: str, analysis_dict: dict) -> str | None:
+        with self._lock:
+            for item in self._items:
+                if item["id"] == news_id:
+                    status = "attached" if item["ai_analysis"] is None else "updated"
+                    item["ai_analysis"] = analysis_dict
+                    return status
+            return None
+
     def reset(self) -> None:
         with self._lock:
-            self._items = list(NEWS_DATA)
+            self._items = [dict(item) for item in NEWS_DATA]
             self._url_index = {item["source_url"]: item["id"] for item in self._items}
             self._content_hashes = {
                 self._hash(item["content"]): item["id"] for item in self._items

@@ -122,3 +122,20 @@ class WebhookIngestResponse(BaseModel):
 
     event_id: str
     status: Literal["created", "duplicate"]
+
+
+class AIAnalysisPayload(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    news_id: str
+    summary: str = Field(..., min_length=1)
+    affected_sectors: list[str]
+    affected_stocks: list[str]
+    sentiment: Literal["bullish", "bearish", "neutral"]
+    analysis_at: AwareDatetime
+
+
+class AIAnalysisResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    status: Literal["attached", "updated"]

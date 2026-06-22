@@ -1,5 +1,11 @@
 # Deferred Work Log
 
+## Deferred from: code review of 3-2-ai-analysis-delivery-webhook-endpoint (2026-06-22)
+
+- **D1: Module-level timestamps evaluated once at import** — `datetime.now(timezone.utc).isoformat()` in `NEWS_INGEST_PAYLOAD` and `VALID_ANALYSIS` is evaluated at module import, not per-test. Harmless for normal CI runs (7-day retention window); becomes a risk if tests run near a retention boundary or `NEWS_RETENTION_DAYS` is very small. Antipattern worth addressing when timestamps are used in list-endpoint assertions. `backend/tests/routers/test_webhooks_ai_analysis.py:10,23`
+- **D2: O(n) linear scan in attach_analysis under lock** — `attach_analysis` iterates `self._items` linearly inside `_lock`, blocking concurrent `get_all()` and `get_by_id()` callers for the full scan. Negligible at 5-item mock scale; add an `_id_index: dict[str, dict]` alongside the existing `_url_index` when implementing persistence. `backend/app/services/news_store.py:51-55`
+- **D3: No test for attach_analysis on pre-seeded mock-data IDs** — All tests ingest a fresh article then attach analysis. No test exercises `news-001` through `news-005`. Would have exposed the shallow-copy bug (F1 above) had it been written. Add coverage when mock-data targeting tests are needed. `backend/tests/routers/test_webhooks_ai_analysis.py`
+
 ## Deferred from: code review of 3-1-news-ingestion-webhook-endpoint (2026-06-22)
 
 - **D1: No authentication on webhook endpoint** — POST /webhooks/news-ingest has no auth header, API key, or shared secret. Any caller can inject content. Intentional MVP decision for internal n8n integration; address in a future security hardening story. `backend/app/routers/webhooks.py:8`
