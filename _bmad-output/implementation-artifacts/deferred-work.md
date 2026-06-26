@@ -1,5 +1,11 @@
 # Deferred Work Log
 
+## Deferred from: code review of 5-1-market-themes-schema-and-api-endpoints (2026-06-26)
+
+- **D1: TOCTOU — `get_by_id` + `is_archived` use separate `datetime.now()` snapshots** — At the exact 48h boundary, `get_theme()` calls `get_by_id()` (releases lock, returns snapshot) then `is_archived()` (computes a new `now()`). A theme at exactly the 48h mark can return 410 while GET /trends/ still shows it as active. Inherent to non-atomic time-based filtering; microsecond window; low impact. Address with a single atomic `get_by_id_with_archive_status()` if exact-boundary semantics become important. `backend/app/routers/trends.py:17-21`
+- **D2: Naive datetime in `upsert` causes TypeError in `get_active()`** — `ThemeStore.upsert()` stores whatever `last_article_at` value is given. A naive (tz-unaware) datetime compared against the aware `cutoff` raises `TypeError`. Currently safe because only tests (explicit `timezone.utc`) call `upsert`. Will be fully guarded once Story 5.4 adds the webhook with `AwareDatetime` Pydantic validation. Consider adding an assertion in `upsert` if Story 5.4 is delayed. `backend/app/services/theme_store.py:21`
+- **D3: `articles.sort()` latent crash if `published_at` becomes a string** — `news_store.get_by_id` returns `datetime` objects today. If Story 5.4 ever calls `model_dump(mode="json")` before storing, `published_at` becomes a string, and mixed-type sorting raises `TypeError`. Fix: normalize `published_at` to `datetime` in the sort key, or add a type guard in the trends router. `backend/app/routers/trends.py:28`
+
 ## Deferred from: code review of 4-4-home-page-integration-dailybriefcard-as-primary-entry-point (2026-06-25)
 
 - **D1: Null/malformed brief fields in DailyBriefCard** — `key_developments` (null/undefined/non-array), `brief_date` (empty string or malformed ISO), `generated_at` (empty or unparseable), `overall_sentiment` (null/undefined) are not guarded in `DailyBriefCard.tsx`. Would produce `TypeError` or "Invalid Date" in the UI if the API ever returns partially-formed data. Pre-existing in Story 4.2. Fix when adding schema hardening or a runtime validation boundary. `frontend/src/components/DailyBriefCard.tsx`

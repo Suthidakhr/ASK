@@ -169,3 +169,19 @@ class DailyBriefWebhookResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     status: Literal["created", "updated"]
+
+
+class MarketThemeSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    theme_id: str
+    name: str
+    description: str
+    overall_sentiment: Literal["bullish", "bearish", "neutral"]
+    article_count: int
+    last_article_at: AwareDatetime
+    created_at: AwareDatetime
+
+
+class MarketTheme(MarketThemeSummary):
+    constituent_articles: list[NewsItem]

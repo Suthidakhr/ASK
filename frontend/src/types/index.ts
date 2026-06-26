@@ -88,3 +88,17 @@ export interface DailyBrief {
   brief_date: string;
   is_fallback: boolean;
 }
+
+export interface MarketThemeSummary {
+  theme_id: string;
+  name: string;
+  description: string;
+  overall_sentiment: "bullish" | "bearish" | "neutral";
+  article_count: number;
+  last_article_at: string;
+  created_at: string;
+}
+
+export interface MarketTheme extends MarketThemeSummary {
+  constituent_articles: NewsItem[];
+}

@@ -1,4 +1,4 @@
-import { NewsItem, NewsListResponse, MarketOverview, TickerItem, DailyBrief } from "@/types";
+import { NewsItem, NewsListResponse, MarketOverview, TickerItem, DailyBrief, MarketThemeSummary, MarketTheme } from "@/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -29,4 +29,8 @@ export const api = {
     fetchAPI<{ ticker: TickerItem[] }>("/market/ticker").then((r) => r.ticker),
 
   getDailyBrief: () => fetchAPI<DailyBrief>("/daily-brief/"),
+
+  getTrends: () => fetchAPI<MarketThemeSummary[]>("/trends/"),
+
+  getTheme: (id: string) => fetchAPI<MarketTheme>(`/trends/${id}`),
 };
