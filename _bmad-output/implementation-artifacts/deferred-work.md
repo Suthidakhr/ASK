@@ -1,5 +1,17 @@
 # Deferred Work Log
 
+## Deferred from: code review of 5-2-themecard-component-and-trends-page (2026-06-26)
+
+- **D1: Single `ThemeCardSkeleton` fallback doesn't match rendered list count** — The Suspense boundary uses one `<ThemeCardSkeleton />` as fallback regardless of how many ThemeCards will render. On slow API loads, users see one skeleton then N cards appear at once — CLS. Deferred: design choice, matching DailyBriefCard and NewsCard patterns. `frontend/src/app/trends/page.tsx:89`
+- **D2: Future timestamps clamped to "0h ago" in `relativeTime()`** — `Math.max(0, …)` clamps negative values (future `last_article_at` due to clock skew) to "0h ago" silently. Deferred: intentional guard; a "just now" threshold could be added later. `frontend/src/components/ThemeCard.tsx:7`
+- **D3: `relativeTime()` 24h boundary gap** — Jumps from "23h ago" to "1 day ago" with no "24h ago" representation. Deferred: minor UX edge case. `frontend/src/components/ThemeCard.tsx:8`
+- **D4: Error catch discards actual thrown error object** — `catch {}` block captures only a timestamp ISO string; the error reason, status code, or network details are permanently lost. Deferred: matches AC7 spec "Last attempted [time]"; no diagnostic info was specified. `frontend/src/app/trends/page.tsx:14-18`
+- **D5: `toLocaleTimeString("Asia/Bangkok")` requires full ICU Node build** — Crashes with `RangeError: Invalid time zone` on Docker slim-icu images. Deferred: Next.js hosted environments (Vercel, etc.) ship full ICU by default; monitor on deployment target. `frontend/src/app/trends/page.tsx:20-24`
+- **D6: `SentimentBadge` crashes on unexpected sentiment value — pre-existing** — Destructuring `SENTIMENT_STYLES[unknown]` returns `undefined`; throws `TypeError`. Already logged in deferred-work.md (2-4 entry D1). `frontend/src/components/SentimentBadge.tsx:14`
+- **D7: `TickerBar` renders empty bar with no empty-state guard — pre-existing** — `items=[]` produces a visible empty ticker strip. Deferred: pre-existing, consistent with other pages. `frontend/src/components/TickerBar.tsx`
+- **D8: Frontend doesn't sort themes client-side** — `ThemesServer` renders `themes` as returned by `api.getTrends()`; sorted correctly only because `ThemeStore.get_active()` guarantees descending order. Deferred: rely on API contract; add defensive client sort if contract is ever weakened. `frontend/src/app/trends/page.tsx:56`
+- **D9: Empty-state copy deviates from AC6 exact-match string** — Implementation splits "No active themes right now. Themes refresh daily." and "Check back after market hours (18:00 Bangkok time)" across two `<p>` elements and appends "or view latest news" which is not in the spec-mandated string. Deferred: all required words present; CTA link is required by AC6; minor cosmetic deviation. `frontend/src/app/trends/page.tsx:35-50`
+
 ## Deferred from: code review of 5-1-market-themes-schema-and-api-endpoints (2026-06-26)
 
 - **D1: TOCTOU — `get_by_id` + `is_archived` use separate `datetime.now()` snapshots** — At the exact 48h boundary, `get_theme()` calls `get_by_id()` (releases lock, returns snapshot) then `is_archived()` (computes a new `now()`). A theme at exactly the 48h mark can return 410 while GET /trends/ still shows it as active. Inherent to non-atomic time-based filtering; microsecond window; low impact. Address with a single atomic `get_by_id_with_archive_status()` if exact-boundary semantics become important. `backend/app/routers/trends.py:17-21`
