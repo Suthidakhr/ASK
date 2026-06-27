@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import { MarketOverview, SectorPerformance, TickerItem } from "@/types";
+import { MarketOverview, MarketSnapshot, SectorPerformance } from "@/types";
 import Navbar from "@/components/Navbar";
 import TickerBar from "@/components/TickerBar";
 import SectorHeatmap from "@/components/SectorHeatmap";
@@ -9,7 +9,7 @@ export const revalidate = 60;
 
 export default async function StocksPage() {
   let overview: MarketOverview | null = null;
-  let tickers: TickerItem[] = [];
+  let snapshot: MarketSnapshot | null = null;
   let sectors: SectorPerformance[] = [];
 
   try {
@@ -17,9 +17,8 @@ export default async function StocksPage() {
   } catch { /* ignore */ }
 
   try {
-    const snapshot = await api.getMarketSnapshot();
-    tickers = snapshot.tickers;
-  } catch { /* no snapshot yet */ }
+    snapshot = await api.getMarketSnapshot();
+  } catch { /* snapshot stays null — TickerBar renders "Market data unavailable" */ }
 
   try {
     sectors = await api.getMarketSectors();
@@ -28,7 +27,7 @@ export default async function StocksPage() {
   return (
     <>
       <Navbar />
-      <TickerBar items={tickers} />
+      <TickerBar snapshot={snapshot} />
 
       <div className="border-b px-6 py-3 flex items-center justify-between"
         style={{ backgroundColor: "#F5F1EA", borderColor: "rgba(74,52,42,0.1)" }}>

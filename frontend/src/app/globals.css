@@ -24,6 +24,18 @@ body {
   animation: ticker-scroll 35s linear infinite;
 }
 
+/* Pause scroll on hover (desktop pointer) */
+.ticker-scroll-container:hover .ticker-animate {
+  animation-play-state: paused;
+}
+
+/* Pause entirely when user prefers reduced motion — transition-duration rule does NOT cover animations */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-animate {
+    animation-play-state: paused;
+  }
+}
+
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }

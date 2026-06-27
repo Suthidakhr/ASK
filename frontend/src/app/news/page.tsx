@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { api } from "@/lib/api";
-import { NewsItem, TickerItem } from "@/types";
+import { MarketSnapshot, NewsItem } from "@/types";
 import Navbar from "@/components/Navbar";
 import TickerBar from "@/components/TickerBar";
 import NewsFeed from "@/components/NewsFeed";
@@ -69,18 +69,17 @@ export default async function NewsPage({
   const activeLabel =
     CATEGORY_TABS.find((c) => c.slug === category)?.label ?? "All";
 
-  let tickers: TickerItem[] = [];
+  let snapshot: MarketSnapshot | null = null;
   try {
-    const snapshot = await api.getMarketSnapshot();
-    tickers = snapshot.tickers;
+    snapshot = await api.getMarketSnapshot();
   } catch {
-    // no snapshot yet — TickerBar renders empty gracefully
+    // snapshot stays null — TickerBar renders "Market data unavailable"
   }
 
   return (
     <>
       <Navbar />
-      <TickerBar items={tickers} />
+      <TickerBar snapshot={snapshot} />
 
       <div
         className="border-b px-6 py-3"

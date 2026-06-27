@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
-import { NewsItem, TickerItem } from "@/types";
+import { MarketSnapshot, NewsItem } from "@/types";
 import Navbar from "@/components/Navbar";
 import TickerBar from "@/components/TickerBar";
 import SkeletonCard from "@/components/SkeletonCard";
@@ -28,18 +28,17 @@ export default async function NewsDetailPage({
 }) {
   const { id } = await params;
 
-  let tickers: TickerItem[] = [];
+  let snapshot: MarketSnapshot | null = null;
   try {
-    const snapshot = await api.getMarketSnapshot();
-    tickers = snapshot.tickers;
+    snapshot = await api.getMarketSnapshot();
   } catch {
-    // no snapshot yet — TickerBar renders empty gracefully
+    // snapshot stays null — TickerBar renders "Market data unavailable"
   }
 
   return (
     <>
       <Navbar />
-      <TickerBar items={tickers} />
+      <TickerBar snapshot={snapshot} />
       <div
         className="border-b"
         style={{

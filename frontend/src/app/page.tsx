@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { api } from "@/lib/api";
-import { MarketOverview, NewsItem, SectorPerformance, TickerItem } from "@/types";
+import { MarketOverview, MarketSnapshot, NewsItem, SectorPerformance } from "@/types";
 import Navbar from "@/components/Navbar";
 import TickerBar from "@/components/TickerBar";
 import NewsFeed from "@/components/NewsFeed";
@@ -55,18 +55,17 @@ async function MarketSidebarServer() {
 }
 
 export default async function HomePage() {
-  let tickers: TickerItem[] = [];
+  let snapshot: MarketSnapshot | null = null;
   try {
-    const snapshot = await api.getMarketSnapshot();
-    tickers = snapshot.tickers;
+    snapshot = await api.getMarketSnapshot();
   } catch {
-    // no snapshot yet — TickerBar renders empty gracefully
+    // snapshot stays null — TickerBar renders "Market data unavailable"
   }
 
   return (
     <>
       <Navbar />
-      <TickerBar items={tickers} />
+      <TickerBar snapshot={snapshot} />
 
       {/* Page header bar */}
       <div
