@@ -2,10 +2,12 @@ import { render, screen } from '@testing-library/react'
 import SectorHeatmap from './SectorHeatmap'
 import { SectorPerformance } from '@/types'
 
+const UPDATED_AT = '2026-06-27T03:00:00Z'
+
 const VALID_SECTORS: SectorPerformance[] = [
-  { name: 'ก่อสร้าง', change_pct: 2.41, level: 'strong_up' },
-  { name: 'เกษตร', change_pct: -0.08, level: 'flat' },
-  { name: 'สายการบิน', change_pct: -1.21, level: 'down' },
+  { sector_name: 'ก่อสร้าง', change_pct: 2.41, direction: 'positive', top_article_id: 'news-001', updated_at: UPDATED_AT },
+  { sector_name: 'เกษตร', change_pct: -0.08, direction: 'neutral', top_article_id: null, updated_at: UPDATED_AT },
+  { sector_name: 'สายการบิน', change_pct: -1.21, direction: 'negative', top_article_id: null, updated_at: UPDATED_AT },
 ]
 
 describe('SectorHeatmap', () => {
@@ -16,17 +18,17 @@ describe('SectorHeatmap', () => {
     expect(screen.getByText('สายการบิน')).toBeInTheDocument()
   })
 
-  it('strong_up sector renders with + prefix', () => {
+  it('positive sector renders with + prefix', () => {
     render(<SectorHeatmap sectors={VALID_SECTORS} />)
     expect(screen.getByText('+2.41%')).toBeInTheDocument()
   })
 
-  it('down sector renders negative percentage without + prefix', () => {
+  it('negative sector renders negative percentage without + prefix', () => {
     render(<SectorHeatmap sectors={VALID_SECTORS} />)
     expect(screen.getByText('-1.21%')).toBeInTheDocument()
   })
 
-  it('flat/zero sector renders without + prefix', () => {
+  it('neutral sector renders without + prefix', () => {
     render(<SectorHeatmap sectors={VALID_SECTORS} />)
     expect(screen.getByText('-0.08%')).toBeInTheDocument()
   })

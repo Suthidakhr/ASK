@@ -1,5 +1,17 @@
 import pytest
 
+from app.services.market_snapshot_store import market_snapshot_store
+from app.services.sector_performance_store import sector_performance_store
+
+
+@pytest.fixture(autouse=True)
+async def reset_market_stores():
+    market_snapshot_store.reset()
+    sector_performance_store.reset()
+    yield
+    market_snapshot_store.reset()
+    sector_performance_store.reset()
+
 
 async def test_get_market_overview_returns_200(client):
     response = await client.get("/market/overview")
@@ -56,6 +68,8 @@ async def test_get_indices_returns_list(client):
     assert len(data) > 0
 
 
+# GET /market/sectors now serves from sector_performance_store (starts empty)
+
 async def test_get_sectors_returns_200(client):
     response = await client.get("/market/sectors")
     assert response.status_code == 200
@@ -65,4 +79,25 @@ async def test_get_sectors_returns_list(client):
     response = await client.get("/market/sectors")
     data = response.json()
     assert isinstance(data, list)
-    assert len(data) > 0
+
+
+# GET /market/snapshot
+
+async def test_get_snapshot_returns_404_when_empty(client):
+    response = await client.get("/market/snapshot")
+    assert response.status_code == 404
+
+
+async def test_get_snapshot_returns_200_after_data_stored(client):
+    from datetime import datetime, timezone
+    market_snapshot_store.set({
+        "indices": [{"name": "SET", "value": 1384.52, "change_pct": 0.60, "direction": "positive"}],
+        "tickers": [{"symbol": "PTT", "price": 32.50, "change_pct": -0.76, "direction": "negative"}],
+        "market_open": True,
+        "snapshot_at": datetime(2026, 6, 27, 3, 0, tzinfo=timezone.utc),
+    })
+    response = await client.get("/market/snapshot")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["market_open"] is True
+    assert "snapshot_at" in data

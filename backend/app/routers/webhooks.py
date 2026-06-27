@@ -1,16 +1,22 @@
 from fastapi import APIRouter, HTTPException
+
 from app.models.schemas import (
     AIAnalysisPayload,
     AIAnalysisResponse,
     DailyBriefIngestPayload,
     DailyBriefWebhookResponse,
+    MarketSnapshot,
+    MarketWebhookResponse,
     NewsIngestPayload,
+    SectorPerformance,
     ThemeIngestPayload,
     ThemeWebhookResponse,
     WebhookIngestResponse,
 )
 from app.services.daily_brief_store import daily_brief_store
+from app.services.market_snapshot_store import market_snapshot_store
 from app.services.news_store import news_store
+from app.services.sector_performance_store import sector_performance_store
 from app.services.theme_store import theme_store
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
@@ -45,3 +51,15 @@ async def ingest_theme(payload: ThemeIngestPayload) -> ThemeWebhookResponse:
             raise HTTPException(status_code=422, detail=f"Article not found: {aid}")
     status = theme_store.upsert(payload.model_dump())
     return ThemeWebhookResponse(status=status)
+
+
+@router.post("/market-snapshot", response_model=MarketWebhookResponse)
+async def ingest_market_snapshot(payload: MarketSnapshot) -> MarketWebhookResponse:
+    market_snapshot_store.set(payload.model_dump())
+    return MarketWebhookResponse(status="updated")
+
+
+@router.post("/sector-performance", response_model=MarketWebhookResponse)
+async def ingest_sector_performance(payload: list[SectorPerformance]) -> MarketWebhookResponse:
+    sector_performance_store.set_all([s.model_dump() for s in payload])
+    return MarketWebhookResponse(status="updated")

@@ -40,12 +40,6 @@ export interface MarketIndex {
   market: string;
 }
 
-export interface SectorPerformance {
-  name: string;
-  change_pct: number;
-  level: "strong_up" | "up" | "flat" | "down" | "strong_down";
-}
-
 export interface TrendItem {
   rank: number;
   title: string;
@@ -65,19 +59,45 @@ export interface AISummary {
 
 export interface MarketOverview {
   indices: MarketIndex[];
-  sectors: SectorPerformance[];
+  sectors: { name: string; change_pct: number; level: string }[];
   trends: TrendItem[];
   ai_summary: AISummary;
   last_updated: string;
   news_count: number;
 }
 
+// --- Epic 6: Market Context Widget types ---
+
 export interface TickerItem {
   symbol: string;
   price: number;
-  change: number;
   change_pct: number;
+  direction: "positive" | "negative" | "neutral";
 }
+
+export interface IndexItem {
+  name: string;
+  value: number;
+  change_pct: number;
+  direction: "positive" | "negative" | "neutral";
+}
+
+export interface MarketSnapshot {
+  indices: IndexItem[];
+  tickers: TickerItem[];
+  market_open: boolean;
+  snapshot_at: string;
+}
+
+export interface SectorPerformance {
+  sector_name: string;
+  change_pct: number;
+  direction: "positive" | "negative" | "neutral";
+  top_article_id: string | null;
+  updated_at: string;
+}
+
+// ---
 
 export interface DailyBrief {
   overall_sentiment: "bullish" | "bearish" | "neutral";

@@ -58,7 +58,7 @@ class MarketIndex(BaseModel):
     market: str
 
 
-class SectorPerformance(BaseModel):
+class LegacySectorItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     name: str
@@ -91,12 +91,59 @@ class MarketOverview(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     indices: list[MarketIndex]
-    sectors: list[SectorPerformance]
+    sectors: list[LegacySectorItem]
     trends: list[TrendItem]
     ai_summary: AISummary
     last_updated: str
     news_count: int
 
+
+# --- Epic 6: Market Context Widget schemas ---
+
+class TickerItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    symbol: str
+    price: float
+    change_pct: float
+    direction: Literal["positive", "negative", "neutral"]
+
+
+class IndexItem(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    name: str
+    value: float
+    change_pct: float
+    direction: Literal["positive", "negative", "neutral"]
+
+
+class MarketSnapshot(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    indices: list[IndexItem]
+    tickers: list[TickerItem]
+    market_open: bool
+    snapshot_at: AwareDatetime
+
+
+class SectorPerformance(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    sector_name: str
+    change_pct: float
+    direction: Literal["positive", "negative", "neutral"]
+    top_article_id: str | None
+    updated_at: AwareDatetime
+
+
+class MarketWebhookResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    status: Literal["updated"]
+
+
+# --- News ingestion schemas ---
 
 class NewsIngestPayload(BaseModel):
     model_config = ConfigDict(from_attributes=True)

@@ -70,17 +70,37 @@ describe('api.getMarketOverview', () => {
   })
 })
 
-describe('api.getTicker', () => {
-  it('calls /market/ticker and returns unwrapped ticker array', async () => {
-    const fetchMock = makeFetch({ ticker: [{ symbol: 'SET', price: 1384.52, change: 8.21, change_pct: 0.60 }] })
+describe('api.getMarketSnapshot', () => {
+  it('calls /market/snapshot', async () => {
+    const fetchMock = makeFetch({
+      indices: [],
+      tickers: [{ symbol: 'SET', price: 1384.52, change_pct: 0.60, direction: 'positive' }],
+      market_open: true,
+      snapshot_at: '2026-06-27T03:00:00Z',
+    })
     vi.stubGlobal('fetch', fetchMock)
-    const result = await api.getTicker()
+    const result = await api.getMarketSnapshot()
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining('/market/ticker'),
+      expect.stringContaining('/market/snapshot'),
       expect.any(Object)
     )
-    expect(Array.isArray(result)).toBe(true)
-    expect(result[0].symbol).toBe('SET')
+    expect(result.tickers[0].symbol).toBe('SET')
+    expect(result.tickers[0].direction).toBe('positive')
+  })
+})
+
+describe('api.getMarketSectors', () => {
+  it('calls /market/sectors and returns sector list', async () => {
+    const fetchMock = makeFetch([
+      { sector_name: 'ก่อสร้าง', change_pct: 2.41, direction: 'positive', top_article_id: null, updated_at: '2026-06-27T03:00:00Z' },
+    ])
+    vi.stubGlobal('fetch', fetchMock)
+    const result = await api.getMarketSectors()
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/market/sectors'),
+      expect.any(Object)
+    )
+    expect(result[0].sector_name).toBe('ก่อสร้าง')
   })
 })
 

@@ -60,17 +60,18 @@ async function ThemesServer() {
 }
 
 export default async function TrendsPage() {
-  let ticker: TickerItem[] = [];
+  let tickers: TickerItem[] = [];
   try {
-    ticker = await api.getTicker();
+    const snapshot = await api.getMarketSnapshot();
+    tickers = snapshot.tickers;
   } catch {
-    // ticker stays empty on failure
+    // no snapshot yet — TickerBar renders empty gracefully
   }
 
   return (
     <>
       <Navbar />
-      <TickerBar items={ticker} />
+      <TickerBar items={tickers} />
 
       <div
         className="border-b px-6 py-3"

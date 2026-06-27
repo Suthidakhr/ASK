@@ -8,7 +8,7 @@ This guide covers how to configure n8n to drive the ASK (Aware Signals & Knowled
 
 ## Overview
 
-Four n8n workflows power the live data pipeline:
+Five n8n workflows power the live data pipeline:
 
 | Workflow | Purpose | Trigger |
 |---------|---------|---------|
@@ -16,6 +16,7 @@ Four n8n workflows power the live data pipeline:
 | **AI Analysis** | Calls Claude API with `SYSTEM_PROMPT`, POSTs result to `/webhooks/ai-analysis` | Triggered per article after ingestion |
 | **Daily Brief** | Generates AI market summary, POSTs to `/webhooks/daily-brief` | Daily at 07:00 Bangkok time |
 | **Theme Clustering** | Receives AI-identified theme clusters, POSTs to `/webhooks/themes` | Daily after AI analysis batch |
+| **Market Data** | Fetches index/ticker snapshot and sector performance, POSTs to market webhooks | Every 15 min during market hours (Mon–Fri) |
 
 All workflows use environment variables for all webhook URLs — never hardcoded values.
 
@@ -31,6 +32,8 @@ Configure these in n8n's **Settings → Variables** (or your deployment's enviro
 | `ASK_AI_ANALYSIS_WEBHOOK_URL` | Full URL for `POST /webhooks/ai-analysis` | `https://ask.example.com/webhooks/ai-analysis` |
 | `ASK_DAILY_BRIEF_WEBHOOK_URL` | Full URL for `POST /webhooks/daily-brief` | `https://ask.example.com/webhooks/daily-brief` |
 | `ASK_THEME_WEBHOOK_URL` | Full URL for `POST /webhooks/themes` | `https://ask.example.com/webhooks/themes` |
+| `ASK_MARKET_SNAPSHOT_WEBHOOK_URL` | Full URL for `POST /webhooks/market-snapshot` | `https://ask.example.com/webhooks/market-snapshot` |
+| `ASK_SECTOR_PERFORMANCE_WEBHOOK_URL` | Full URL for `POST /webhooks/sector-performance` | `https://ask.example.com/webhooks/sector-performance` |
 | `ANTHROPIC_API_KEY` | Claude API key for the AI analysis node | `sk-ant-api03-...` |
 | `ASK_BASE_URL` | Base URL used for polling in E2E validation | `https://ask.example.com` |
 
@@ -196,7 +199,7 @@ Commit exported workflow JSON files to the repo alongside code. This allows roll
 
 The ASK webhook endpoints use stable URL paths (`/webhooks/news-ingest`, `/webhooks/ai-analysis`, `/webhooks/daily-brief`) — there are no UUID tokens in the paths. URL rotation means changing the base domain or path prefix:
 
-1. Update `ASK_NEWS_INGEST_WEBHOOK_URL`, `ASK_AI_ANALYSIS_WEBHOOK_URL`, `ASK_DAILY_BRIEF_WEBHOOK_URL`, and/or `ASK_THEME_WEBHOOK_URL` in n8n's environment variables
+1. Update `ASK_NEWS_INGEST_WEBHOOK_URL`, `ASK_AI_ANALYSIS_WEBHOOK_URL`, `ASK_DAILY_BRIEF_WEBHOOK_URL`, `ASK_THEME_WEBHOOK_URL`, `ASK_MARKET_SNAPSHOT_WEBHOOK_URL`, and/or `ASK_SECTOR_PERFORMANCE_WEBHOOK_URL` in n8n's environment variables
 2. Save the variable — n8n picks up the new value on the next workflow execution
 3. No FastAPI code deploy, no workflow JSON change, no restart required
 
@@ -328,6 +331,105 @@ Both are treated as success — n8n should not retry on either.
 - **On webhook 422 with `"Article not found: <id>"`:** The `constituent_article_ids` list contains an ID not yet in ASK. Either the news ingestion hasn't completed yet (retry later) or the article ID is wrong. Check Workflow 1 has run and articles exist.
 - **On webhook 422 (other):** Check `overall_sentiment` value and that all datetime fields include timezone offsets.
 - **On webhook delivery failure:** n8n retries automatically. The endpoint is idempotent — retries for the same `theme_id` return `{"status": "updated"}` and never duplicate data.
+
+---
+
+## Workflow 5: Market Data
+
+Fetches live index/ticker prices and sector performance from a market data source, then pushes the data into ASK via two separate webhook calls. Runs during SET trading hours so the TickerBar and Sector Heatmap stay current throughout the session.
+
+**Reference requirements:** AC-6.1-05 (market snapshot ingestion), AC-6.1-06 (sector performance ingestion), AC-6.1-09 (webhook response `{"status": "updated"}`).
+
+### Schedule Configuration
+
+Bangkok time is UTC+7. The cron expression below is in **UTC**.
+
+```
+*/15 2-11 * * 1-5
+```
+
+This fires every 15 minutes from 02:00–11:45 UTC (= 09:00–18:45 Bangkok) on weekdays, covering the SET trading session (09:00–17:00 BKK) with buffer.
+
+**n8n version note:** For 6-field cron (with seconds prefix): `0 */15 2-11 * * 1-5`
+
+### Trigger Node
+
+- **Type:** Schedule Trigger
+- **Cron:** `*/15 2-11 * * 1-5` (UTC)
+- **Timezone:** Set to UTC
+
+### Step 1 — Fetch Market Data
+
+Configure an HTTP Request node to call your market data provider (e.g., SET API, Yahoo Finance, or an internal aggregator). The response must supply:
+
+- One or more index values (e.g., SET, mai)
+- Ticker prices with percentage change
+- Sector-level performance
+
+### Step 2 — POST Market Snapshot
+
+**Method:** POST  
+**URL:** `{{ $env.ASK_MARKET_SNAPSHOT_WEBHOOK_URL }}`  
+**Content-Type:** `application/json`
+
+**Payload shape:**
+
+```json
+{
+  "indices": [
+    { "name": "SET", "value": 1384.52, "change_pct": 0.60, "direction": "positive" },
+    { "name": "mai", "value": 589.10, "change_pct": -0.15, "direction": "negative" }
+  ],
+  "tickers": [
+    { "symbol": "PTT",   "price": 32.50, "change_pct": -0.76, "direction": "negative" },
+    { "symbol": "KBANK", "price": 143.00, "change_pct": 1.06, "direction": "positive" }
+  ],
+  "market_open": true,
+  "snapshot_at": "2026-06-27T04:15:00+07:00"
+}
+```
+
+**`direction`** must be exactly `"positive"`, `"negative"`, or `"neutral"`.  
+**`snapshot_at`** must be timezone-aware (include `+07:00` or `Z`). Naive datetimes return `422`.  
+**`market_open`** should be `true` during SET trading hours, `false` otherwise.
+
+**Success response:**
+```json
+{ "status": "updated" }
+```
+
+### Step 3 — POST Sector Performance
+
+**Method:** POST  
+**URL:** `{{ $env.ASK_SECTOR_PERFORMANCE_WEBHOOK_URL }}`  
+**Content-Type:** `application/json`
+
+**Payload shape — a JSON array:**
+
+```json
+[
+  { "sector_name": "ธนาคาร",      "change_pct": 1.12, "direction": "positive", "top_article_id": "news-uuid-001", "updated_at": "2026-06-27T04:15:00+07:00" },
+  { "sector_name": "พลังงาน",     "change_pct": -0.54, "direction": "negative", "top_article_id": null,           "updated_at": "2026-06-27T04:15:00+07:00" },
+  { "sector_name": "ก่อสร้าง",    "change_pct": 0.02,  "direction": "neutral",  "top_article_id": null,           "updated_at": "2026-06-27T04:15:00+07:00" }
+]
+```
+
+**`direction`** must be exactly `"positive"`, `"negative"`, or `"neutral"`.  
+**`top_article_id`** is optional — use the UUID of a recently ingested article if the sector's movement has a corresponding news story, otherwise `null`.  
+**`updated_at`** must be timezone-aware.  
+
+Each POST **replaces** the full sector list. Send all active sectors in a single call.
+
+**Success response:**
+```json
+{ "status": "updated" }
+```
+
+### Error Handling
+
+- **On webhook 422:** Check that all `direction` values are one of the three allowed strings and all datetime fields include a timezone offset.
+- **On webhook delivery failure:** n8n retries automatically. Both endpoints are idempotent — retries overwrite with the same data.
+- **On market data source failure:** Log the error in n8n and skip this cycle. The ASK frontend displays the last successfully stored snapshot until the next successful push.
 
 ---
 

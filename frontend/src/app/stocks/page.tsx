@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import { MarketOverview, SectorPerformance, TickerItem } from "@/types";
 import Navbar from "@/components/Navbar";
 import TickerBar from "@/components/TickerBar";
 import SectorHeatmap from "@/components/SectorHeatmap";
@@ -7,12 +8,27 @@ import MarketOverviewWidget from "@/components/MarketOverviewWidget";
 export const revalidate = 60;
 
 export default async function StocksPage() {
-  const [overview, ticker] = await Promise.all([api.getMarketOverview(), api.getTicker()]);
+  let overview: MarketOverview | null = null;
+  let tickers: TickerItem[] = [];
+  let sectors: SectorPerformance[] = [];
+
+  try {
+    overview = await api.getMarketOverview();
+  } catch { /* ignore */ }
+
+  try {
+    const snapshot = await api.getMarketSnapshot();
+    tickers = snapshot.tickers;
+  } catch { /* no snapshot yet */ }
+
+  try {
+    sectors = await api.getMarketSectors();
+  } catch { /* ignore */ }
 
   return (
     <>
       <Navbar />
-      <TickerBar items={ticker} />
+      <TickerBar items={tickers} />
 
       <div className="border-b px-6 py-3 flex items-center justify-between"
         style={{ backgroundColor: "#F5F1EA", borderColor: "rgba(74,52,42,0.1)" }}>
@@ -21,25 +37,27 @@ export default async function StocksPage() {
             Stock Analysis <span className="font-normal text-sm ml-1" style={{ color: "#B2967D" }}>วิเคราะห์หุ้น</span>
           </h1>
         </div>
-        <div className="flex items-center gap-6 text-xs">
-          <div className="text-right">
-            <div className="font-bold font-mono" style={{ color: "#4A342A" }}>SET</div>
-            <div className="tracking-widest" style={{ color: "#B2967D" }}>EXCHANGE</div>
+        {overview && (
+          <div className="flex items-center gap-6 text-xs">
+            <div className="text-right">
+              <div className="font-bold font-mono" style={{ color: "#4A342A" }}>SET</div>
+              <div className="tracking-widest" style={{ color: "#B2967D" }}>EXCHANGE</div>
+            </div>
+            <div className="text-right">
+              <div className="font-bold font-mono" style={{ color: "#4A342A" }}>{overview.last_updated}</div>
+              <div className="tracking-widest" style={{ color: "#B2967D" }}>LAST UPDATE</div>
+            </div>
           </div>
-          <div className="text-right">
-            <div className="font-bold font-mono" style={{ color: "#4A342A" }}>{overview.last_updated}</div>
-            <div className="tracking-widest" style={{ color: "#B2967D" }}>LAST UPDATE</div>
-          </div>
-        </div>
+        )}
       </div>
 
       <main id="main-content" className="max-w-screen-xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div className="space-y-5">
-            <MarketOverviewWidget indices={overview.indices} />
+            {overview && <MarketOverviewWidget indices={overview.indices} />}
           </div>
           <div className="space-y-5">
-            <SectorHeatmap sectors={overview.sectors} />
+            {sectors.length > 0 && <SectorHeatmap sectors={sectors} />}
 
             {/* Top movers table */}
             <div className="bg-white rounded-xl border overflow-hidden" style={{ borderColor: "rgba(74,52,42,0.1)" }}>

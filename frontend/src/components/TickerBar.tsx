@@ -4,6 +4,18 @@ interface Props {
   items: TickerItem[];
 }
 
+const DIR_COLOR: Record<string, string> = {
+  positive: "text-green-200",
+  negative: "text-red-200",
+  neutral: "text-white/70",
+};
+
+const DIR_ARROW: Record<string, string> = {
+  positive: "▲",
+  negative: "▼",
+  neutral: "–",
+};
+
 export default function TickerBar({ items }: Props) {
   const doubled = [...items, ...items];
 
@@ -21,8 +33,9 @@ export default function TickerBar({ items }: Props) {
               style={{ borderColor: "rgba(255,255,255,0.15)" }}>
               <span className="font-bold text-white">{item.symbol}</span>
               <span className="text-white/80">{item.price.toLocaleString()}</span>
-              <span className={item.change >= 0 ? "text-green-200" : "text-red-200"}>
-                {item.change >= 0 ? "▲" : "▼"} {Math.abs(item.change_pct).toFixed(2)}%
+              <span className={DIR_COLOR[item.direction] ?? "text-white/70"}>
+                {DIR_ARROW[item.direction] ?? "–"}{" "}
+                {isFinite(item.change_pct) ? Math.abs(item.change_pct).toFixed(2) : "—"}%
               </span>
             </span>
           ))}

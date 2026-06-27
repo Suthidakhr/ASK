@@ -57,17 +57,18 @@ export default async function ThemeDetailPage({
 }) {
   const { id } = await params;
 
-  let ticker: TickerItem[] = [];
+  let tickers: TickerItem[] = [];
   try {
-    ticker = await api.getTicker();
+    const snapshot = await api.getMarketSnapshot();
+    tickers = snapshot.tickers;
   } catch {
-    // ticker stays empty — page still renders
+    // no snapshot yet — TickerBar renders empty gracefully
   }
 
   return (
     <>
       <Navbar />
-      <TickerBar items={ticker} />
+      <TickerBar items={tickers} />
       <div
         className="border-b"
         style={{

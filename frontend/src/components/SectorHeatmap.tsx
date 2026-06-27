@@ -1,12 +1,10 @@
 import { SectorPerformance } from "@/types";
 import clsx from "clsx";
 
-const LEVEL_STYLES: Record<string, { cell: string; pct: string }> = {
-  strong_up:   { cell: "bg-green-100", pct: "text-green-700" },
-  up:          { cell: "bg-green-50",  pct: "text-green-600" },
-  flat:        { cell: "bg-stone-50",  pct: "text-stone-400" },
-  down:        { cell: "bg-red-50",    pct: "text-red-600" },
-  strong_down: { cell: "bg-red-100",   pct: "text-red-700" },
+const DIR_STYLES: Record<string, { cell: string; pct: string }> = {
+  positive: { cell: "bg-[#dcfce7]", pct: "text-[#15803d]" },
+  neutral:  { cell: "bg-[#f5f5f4]", pct: "text-[#6b6560]" },
+  negative: { cell: "bg-[#fee2e2]", pct: "text-[#dc2626]" },
 };
 
 interface Props { sectors: SectorPerformance[] }
@@ -23,12 +21,15 @@ export default function SectorHeatmap({ sectors }: Props) {
       </div>
       <div className="p-3 grid grid-cols-3 gap-1.5">
         {sectors.map((sector) => {
-          const s = LEVEL_STYLES[sector.level];
+          const s = DIR_STYLES[sector.direction] ?? DIR_STYLES.neutral;
+          const pctText = isFinite(sector.change_pct)
+            ? `${sector.change_pct > 0 ? "+" : ""}${sector.change_pct.toFixed(2)}%`
+            : "—";
           return (
-            <div key={sector.name} className={clsx("rounded-lg p-2.5 text-center", s.cell)}>
-              <div className="text-xs font-semibold mb-0.5" style={{ color: "#4A342A" }}>{sector.name}</div>
+            <div key={sector.sector_name} className={clsx("rounded-lg p-2.5 text-center", s.cell)}>
+              <div className="text-xs font-semibold mb-0.5" style={{ color: "#4A342A" }}>{sector.sector_name}</div>
               <div className={clsx("text-sm font-bold font-mono", s.pct)}>
-                {sector.change_pct > 0 ? "+" : ""}{sector.change_pct.toFixed(2)}%
+                {pctText}
               </div>
             </div>
           );

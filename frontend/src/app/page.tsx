@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { api } from "@/lib/api";
-import { MarketOverview, NewsItem, TickerItem } from "@/types";
+import { MarketOverview, NewsItem, SectorPerformance, TickerItem } from "@/types";
 import Navbar from "@/components/Navbar";
 import TickerBar from "@/components/TickerBar";
 import NewsFeed from "@/components/NewsFeed";
@@ -34,33 +34,39 @@ async function HomeFeedServer() {
 
 async function MarketSidebarServer() {
   let overview: MarketOverview | null = null;
+  let sectors: SectorPerformance[] = [];
   try {
     overview = await api.getMarketOverview();
   } catch {
     // sidebar stays empty on failure
   }
-  if (!overview) return null;
+  try {
+    sectors = await api.getMarketSectors();
+  } catch {
+    // sectors stay empty on failure
+  }
   return (
     <div className="space-y-4">
-      <MarketOverviewWidget indices={overview.indices} />
-      <SectorHeatmap sectors={overview.sectors} />
-      <TrendSummary trends={overview.trends} />
+      {overview && <MarketOverviewWidget indices={overview.indices} />}
+      {sectors.length > 0 && <SectorHeatmap sectors={sectors} />}
+      {overview && <TrendSummary trends={overview.trends} />}
     </div>
   );
 }
 
 export default async function HomePage() {
-  let ticker: TickerItem[] = [];
+  let tickers: TickerItem[] = [];
   try {
-    ticker = await api.getTicker();
+    const snapshot = await api.getMarketSnapshot();
+    tickers = snapshot.tickers;
   } catch {
-    // ticker stays empty on failure
+    // no snapshot yet — TickerBar renders empty gracefully
   }
 
   return (
     <>
       <Navbar />
-      <TickerBar items={ticker} />
+      <TickerBar items={tickers} />
 
       {/* Page header bar */}
       <div
