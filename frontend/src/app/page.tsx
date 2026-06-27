@@ -4,7 +4,7 @@ import { MarketOverview, MarketSnapshot, NewsItem, SectorPerformance } from "@/t
 import Navbar from "@/components/Navbar";
 import TickerBar from "@/components/TickerBar";
 import NewsFeed from "@/components/NewsFeed";
-import MarketOverviewWidget from "@/components/MarketOverviewWidget";
+import MarketOverviewWidget, { MarketOverviewWidgetSkeleton } from "@/components/MarketOverviewWidget";
 import SectorHeatmap from "@/components/SectorHeatmap";
 import TrendSummary from "@/components/TrendSummary";
 import DailyBriefServer from "@/components/DailyBriefServer";
@@ -34,11 +34,17 @@ async function HomeFeedServer() {
 
 async function MarketSidebarServer() {
   let overview: MarketOverview | null = null;
+  let snapshot: MarketSnapshot | null = null;
   let sectors: SectorPerformance[] = [];
   try {
     overview = await api.getMarketOverview();
   } catch {
-    // sidebar stays empty on failure
+    // sidebar overview stays null on failure
+  }
+  try {
+    snapshot = await api.getMarketSnapshot();
+  } catch {
+    // snapshot stays null — MarketOverviewWidget renders unavailable state
   }
   try {
     sectors = await api.getMarketSectors();
@@ -47,7 +53,7 @@ async function MarketSidebarServer() {
   }
   return (
     <div className="space-y-4">
-      {overview && <MarketOverviewWidget indices={overview.indices} />}
+      <MarketOverviewWidget snapshot={snapshot} />
       {sectors.length > 0 && <SectorHeatmap sectors={sectors} />}
       {overview && <TrendSummary trends={overview.trends} />}
     </div>
@@ -131,7 +137,7 @@ export default async function HomePage() {
             <Suspense fallback={<DailyBriefCardSkeleton />}>
               <DailyBriefServer />
             </Suspense>
-            <Suspense fallback={<SkeletonCard />}>
+            <Suspense fallback={<MarketOverviewWidgetSkeleton />}>
               <MarketSidebarServer />
             </Suspense>
           </div>

@@ -1,14 +1,15 @@
 ---
-status: ready-for-dev
+status: review
 epic: 6
 story: 3
 story_key: "6-3-market-overview-widget-component"
 created: 2026-06-27
+baseline_commit: 229eea312ef6cec4aec7f094872a5a8221455a36
 ---
 
 # Story 6.3: MarketOverviewWidget Component
 
-**Status:** ready-for-dev
+**Status:** review
 
 ## Story
 
@@ -57,33 +58,33 @@ So that I understand the macro direction before reading individual news articles
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Rewrite `MarketOverviewWidget` component
-  - [ ] 1.1 Change prop from `{ indices: MarketIndex[] }` to `{ snapshot: MarketSnapshot | null }`
-  - [ ] 1.2 Add null guard: when `snapshot === null`, render error state (AC4)
-  - [ ] 1.3 Render index rows from `snapshot.indices` using `IndexItem` shape — `name`, `value`, `change_pct`, `direction` (AC1)
-  - [ ] 1.4 Apply `isFinite()` guard on `value` before `.toLocaleString()` and on `change_pct` before `.toFixed(2)`; render `"—"` on fail (AC1)
-  - [ ] 1.5 Apply `+` prefix for non-negative `change_pct`; use `direction` field for color token and arrow glyph (AC1)
-  - [ ] 1.6 Add market closed amber note when `!snapshot.market_open` using Bangkok-localized `snapshot_at` (AC2)
+- [x] Task 1: Rewrite `MarketOverviewWidget` component
+  - [x] 1.1 Change prop from `{ indices: MarketIndex[] }` to `{ snapshot: MarketSnapshot | null }`
+  - [x] 1.2 Add null guard: when `snapshot === null`, render error state (AC4)
+  - [x] 1.3 Render index rows from `snapshot.indices` using `IndexItem` shape — `name`, `value`, `change_pct`, `direction` (AC1)
+  - [x] 1.4 Apply `isFinite()` guard on `value` before `.toLocaleString()` and on `change_pct` before `.toFixed(2)`; render `"—"` on fail (AC1)
+  - [x] 1.5 Apply `+` prefix for non-negative `change_pct`; use `direction` field for color token and arrow glyph (AC1)
+  - [x] 1.6 Add market closed amber note when `!snapshot.market_open` using Bangkok-localized `snapshot_at` (AC2)
 
-- [ ] Task 2: Export `MarketOverviewWidgetSkeleton`
-  - [ ] 2.1 Add named export `MarketOverviewWidgetSkeleton` to `MarketOverviewWidget.tsx` — header strip + 3 animate-pulse linen row blocks (AC3)
+- [x] Task 2: Export `MarketOverviewWidgetSkeleton`
+  - [x] 2.1 Add named export `MarketOverviewWidgetSkeleton` to `MarketOverviewWidget.tsx` — header strip + 3 animate-pulse linen row blocks (AC3)
 
-- [ ] Task 3: Update call sites
-  - [ ] 3.1 `frontend/src/app/page.tsx` (`MarketSidebarServer`): add `snapshot = await api.getMarketSnapshot()` alongside the existing `overview` fetch; pass `snapshot` to `MarketOverviewWidget`; update `<Suspense fallback>` to use `<MarketOverviewWidgetSkeleton />`
-  - [ ] 3.2 `frontend/src/app/stocks/page.tsx`: change `<MarketOverviewWidget indices={overview.indices} />` to `<MarketOverviewWidget snapshot={snapshot} />`
+- [x] Task 3: Update call sites
+  - [x] 3.1 `frontend/src/app/page.tsx` (`MarketSidebarServer`): add `snapshot = await api.getMarketSnapshot()` alongside the existing `overview` fetch; pass `snapshot` to `MarketOverviewWidget`; update `<Suspense fallback>` to use `<MarketOverviewWidgetSkeleton />`
+  - [x] 3.2 `frontend/src/app/stocks/page.tsx`: change `<MarketOverviewWidget indices={overview.indices} />` to `<MarketOverviewWidget snapshot={snapshot} />`
 
-- [ ] Task 4: Update `MarketOverviewWidget.test.tsx`
-  - [ ] 4.1 Replace `MarketIndex[]` fixture with `MarketSnapshot | null` shape matching the `VALID_SNAPSHOT` pattern from Story 6.2
-  - [ ] 4.2 Update existing passing tests: index name renders, `▲` arrow, `▼` arrow, empty indices no-throw
-  - [ ] 4.3 Add: `+` prefix on positive `change_pct`
-  - [ ] 4.4 Add: `text-positive` / `text-negative` / `text-neutral-text` class applied by direction
-  - [ ] 4.5 Add: market closed amber note when `market_open: false`
-  - [ ] 4.6 Add: "Market data unavailable" renders when `snapshot: null`
-  - [ ] 4.7 Add: `isFinite` NaN guard — `value: NaN` and `change_pct: NaN` render `"—"` not throw
+- [x] Task 4: Update `MarketOverviewWidget.test.tsx`
+  - [x] 4.1 Replace `MarketIndex[]` fixture with `MarketSnapshot | null` shape matching the `VALID_SNAPSHOT` pattern from Story 6.2
+  - [x] 4.2 Update existing passing tests: index name renders, `▲` arrow, `▼` arrow, empty indices no-throw
+  - [x] 4.3 Add: `+` prefix on positive `change_pct`
+  - [x] 4.4 Add: `text-positive` / `text-negative` / `text-neutral-text` class applied by direction
+  - [x] 4.5 Add: market closed amber note when `market_open: false`
+  - [x] 4.6 Add: "Market data unavailable" renders when `snapshot: null`
+  - [x] 4.7 Add: `isFinite` NaN guard — `value: NaN` and `change_pct: NaN` render `"—"` not throw
 
-- [ ] Task 5: Validate
-  - [ ] 5.1 `cd frontend && npx tsc --noEmit` — zero errors
-  - [ ] 5.2 `cd frontend && npx vitest run` — all tests pass
+- [x] Task 5: Validate
+  - [x] 5.1 `cd frontend && npx tsc --noEmit` — zero errors
+  - [x] 5.2 `cd frontend && npx vitest run` — 181/181 tests pass (12 new MarketOverviewWidget tests + 2 skeleton tests)
 
 ---
 
@@ -404,10 +405,19 @@ Story 6.5 (TrendSummary Widget & Full Sidebar Composition) will complete the sid
 ## Dev Agent Record
 
 ### Completion Notes
-_To be filled by dev agent_
+
+Full rewrite of `MarketOverviewWidget` from old `MarketIndex[]` prop to `MarketSnapshot | null`. Key decisions:
+- Semantic color tokens (`text-positive`/`text-negative`/`text-neutral-text`) work on white card background — contrasted correctly, unlike TickerBar (camel bg) which uses light variants
+- `formatBkkTime()` copied from `DailyBriefCard.tsx` pattern for consistency
+- `CardHeader` extracted as internal function to avoid duplication between the main render and the null/error state render
+- `MarketOverviewWidgetSkeleton` exported as named export; `MarketSidebarServer` Suspense fallback updated to use it
+- `page.tsx` (`MarketSidebarServer`) keeps the `overview` fetch for `TrendSummary` (prop-driven); added independent `snapshot` fetch (Next.js deduplicates same-URL fetches within a render tree)
+- `stocks/page.tsx` already had `snapshot` fetched — just updated the prop
+- 14 tests total (12 widget + 2 skeleton); red-green-refactor cycle followed
+- 181/181 tests pass, zero TypeScript errors
 
 ### Debug Log
-_To be filled if issues encountered_
+_No issues encountered._
 
 ---
 
@@ -417,10 +427,10 @@ _To be filled if issues encountered_
 _(none)_
 
 ### Modified Files
-- `frontend/src/components/MarketOverviewWidget.tsx` — full rewrite + skeleton export
-- `frontend/src/components/MarketOverviewWidget.test.tsx` — full rewrite
-- `frontend/src/app/page.tsx` — `MarketSidebarServer`: add snapshot fetch, update widget prop + Suspense fallback
-- `frontend/src/app/stocks/page.tsx` — update `MarketOverviewWidget` prop from `indices` to `snapshot`
+- `frontend/src/components/MarketOverviewWidget.tsx` — full rewrite + named `MarketOverviewWidgetSkeleton` export
+- `frontend/src/components/MarketOverviewWidget.test.tsx` — full rewrite (4 existing → updated, 10 new tests)
+- `frontend/src/app/page.tsx` — import `MarketOverviewWidgetSkeleton`; `MarketSidebarServer` adds snapshot fetch, updates widget prop, updates Suspense fallback
+- `frontend/src/app/stocks/page.tsx` — `MarketOverviewWidget` prop changed from `indices={overview.indices}` to `snapshot={snapshot}`
 
 ---
 
@@ -429,3 +439,4 @@ _(none)_
 | Date | Change |
 |------|--------|
 | 2026-06-27 | Story created |
+| 2026-06-27 | Implementation complete — full rewrite of MarketOverviewWidget to MarketSnapshot prop; skeleton export; 2 call sites updated; 181 tests pass |

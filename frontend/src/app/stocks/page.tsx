@@ -53,7 +53,7 @@ export default async function StocksPage() {
       <main id="main-content" className="max-w-screen-xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div className="space-y-5">
-            {overview && <MarketOverviewWidget indices={overview.indices} />}
+            <MarketOverviewWidget snapshot={snapshot} />
           </div>
           <div className="space-y-5">
             {sectors.length > 0 && <SectorHeatmap sectors={sectors} />}
