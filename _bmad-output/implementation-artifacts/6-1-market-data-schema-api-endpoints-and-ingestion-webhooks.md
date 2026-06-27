@@ -1,5 +1,5 @@
 ---
-status: review
+status: done
 epic: 6
 story: 1
 story_key: "6-1-market-data-schema-api-endpoints-and-ingestion-webhooks"
@@ -573,6 +573,36 @@ _Populated during implementation_
 - `frontend/src/app/trends/[id]/page.tsx`
 - `frontend/src/lib/api.test.ts`
 - `docs/n8n-setup.md`
+
+---
+
+## Senior Developer Review (AI)
+
+**Review date:** 2026-06-27
+**Outcome:** Changes Requested
+
+### Review Follow-ups (AI)
+
+#### Decision-Needed
+
+- [x] [Review][Decision] DailyBriefServer error silencing — resolved: restored `console.error` conditional on `process.env.NODE_ENV !== "production"` to keep dev feedback without polluting production logs.
+- [x] [Review][Decision] GET /market/sectors returns 200 + `[]` when store is empty — resolved: keep 200 + `[]`; sectors is a list endpoint where empty list is semantically valid; frontend guards with `sectors.length > 0`. AC7 gap noted.
+
+#### Patch
+
+- [x] [Review][Patch] `test_schemas.py` tests new `SectorPerformance` with old field names (`name`, `level`) — tests pass for wrong reason; AC1–AC4 have zero schema-unit-test coverage for `TickerItem`, `IndexItem`, `MarketSnapshot`, new `SectorPerformance` [backend/tests/models/test_schemas.py:13,55,252,257] — **RESOLVED**: renamed stale `SectorPerformance` tests to `LegacySectorItem`; added 28 new tests for TickerItem, IndexItem, MarketSnapshot, and SectorPerformance (new shape). 200 backend tests pass.
+- [x] [Review][Patch] `price.toLocaleString()` called without `isFinite()` guard — violates NFR-D02 [frontend/src/components/TickerBar.tsx:35] — **RESOLVED**: wrapped with `isFinite(item.price) ? item.price.toLocaleString() : "—"`.
+- [x] [Review][Patch] `MarketSnapshotStore.set()` and `get()` use shallow `dict()` copy — nested `indices`/`tickers` lists share references; concurrent mutation would corrupt stored state [backend/app/services/market_snapshot_store.py:9,14] — **RESOLVED**: replaced `dict()` with `deepcopy()` from `copy` module.
+- [x] [Review][Patch] `NaN`/`Infinity` float values pass Pydantic validation and reach JSON serialization — `GET /market/snapshot` returns 500 if a malformed webhook payload smuggles `float('inf')` through [backend/app/routers/market.py:48, backend/app/models/schemas.py:103–118] — **RESOLVED**: added `@field_validator("price", "change_pct")` to `TickerItem` and `@field_validator("value", "change_pct")` to `IndexItem` rejecting non-finite values via shared `_finite()` helper.
+
+#### Deferred
+
+- [x] [Review][Defer] Unauthenticated webhook endpoints — pre-existing pattern across all webhook handlers; not introduced by this story [backend/app/routers/webhooks.py] — deferred, pre-existing
+- [x] [Review][Defer] `source_url: string | null` in frontend type but non-nullable in backend schema — pre-existing mismatch [frontend/src/types/index.ts] — deferred, pre-existing
+- [x] [Review][Defer] GET /trends drops deleted articles silently — article_count badge disagrees with constituent_articles length [backend/app/routers/trends.py] — deferred, pre-existing
+- [x] [Review][Defer] `DailyBriefStore.upsert()` shallow-copies payload dict — list fields share references — deferred, pre-existing
+- [x] [Review][Defer] `TickerBar` with empty items still renders `ticker-animate` div — cosmetic flash on cold start — deferred, pre-existing
+- [x] [Review][Defer] `export const revalidate = 60` in `stocks/page.tsx` violates project-context rule (mixing page-level + fetch-level revalidate) — deferred, pre-existing before this story
 
 ---
 

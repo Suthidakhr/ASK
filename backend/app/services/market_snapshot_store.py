@@ -1,3 +1,4 @@
+from copy import deepcopy
 from threading import Lock
 
 
@@ -8,11 +9,11 @@ class MarketSnapshotStore:
 
     def set(self, snapshot_dict: dict) -> None:
         with self._lock:
-            self._snapshot = dict(snapshot_dict)
+            self._snapshot = deepcopy(snapshot_dict)
 
     def get(self) -> dict | None:
         with self._lock:
-            return dict(self._snapshot) if self._snapshot is not None else None
+            return deepcopy(self._snapshot) if self._snapshot is not None else None
 
     def reset(self) -> None:
         with self._lock:

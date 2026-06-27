@@ -32,7 +32,7 @@ export default function TickerBar({ items }: Props) {
             <span key={i} className="inline-flex items-center gap-2 px-6 text-sm border-r"
               style={{ borderColor: "rgba(255,255,255,0.15)" }}>
               <span className="font-bold text-white">{item.symbol}</span>
-              <span className="text-white/80">{item.price.toLocaleString()}</span>
+              <span className="text-white/80">{isFinite(item.price) ? item.price.toLocaleString() : "—"}</span>
               <span className={DIR_COLOR[item.direction] ?? "text-white/70"}>
                 {DIR_ARROW[item.direction] ?? "–"}{" "}
                 {isFinite(item.change_pct) ? Math.abs(item.change_pct).toFixed(2) : "—"}%

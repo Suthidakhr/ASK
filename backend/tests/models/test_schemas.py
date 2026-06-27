@@ -6,12 +6,16 @@ from pydantic import ValidationError
 from app.models.schemas import (
     AIAnalysis,
     AISummary,
+    IndexItem,
+    LegacySectorItem,
     MarketIndex,
     MarketOverview,
+    MarketSnapshot,
     NewsItem,
     NewsListResponse,
     SectorPerformance,
     StockImpact,
+    TickerItem,
     TrendItem,
 )
 
@@ -243,18 +247,18 @@ def test_market_index_non_nullable_numeric_fields(field):
 
 
 # ---------------------------------------------------------------------------
-# AC2 — SectorPerformance non-nullable fields
+# AC2 — LegacySectorItem non-nullable fields (legacy /market/overview sectors)
 # ---------------------------------------------------------------------------
 
 
-def test_sector_performance_name_required():
+def test_legacy_sector_item_name_required():
     with pytest.raises(ValidationError):
-        SectorPerformance(name=None, change_pct=1.0, level="up")
+        LegacySectorItem(name=None, change_pct=1.0, level="strong_up")
 
 
-def test_sector_performance_change_pct_required():
+def test_legacy_sector_item_change_pct_required():
     with pytest.raises(ValidationError):
-        SectorPerformance(name="ก่อสร้าง", change_pct=None, level="up")
+        LegacySectorItem(name="ก่อสร้าง", change_pct=None, level="strong_up")
 
 
 # ---------------------------------------------------------------------------
@@ -334,3 +338,163 @@ def test_news_list_response_empty_items_valid():
         last_updated=datetime(2026, 6, 21, 5, 30, tzinfo=timezone.utc),
     )
     assert response.items == []
+
+
+# ---------------------------------------------------------------------------
+# AC1 — TickerItem schema (Epic 6)
+# ---------------------------------------------------------------------------
+
+VALID_TICKER_ITEM = {
+    "symbol": "PTT",
+    "price": 32.50,
+    "change_pct": -0.76,
+    "direction": "negative",
+}
+
+
+def test_ticker_item_valid_construction():
+    item = TickerItem(**VALID_TICKER_ITEM)
+    assert item.symbol == "PTT"
+    assert item.price == 32.50
+    assert item.change_pct == -0.76
+    assert item.direction == "negative"
+
+
+@pytest.mark.parametrize("direction", ["positive", "negative", "neutral"])
+def test_ticker_item_valid_directions(direction):
+    item = TickerItem(**{**VALID_TICKER_ITEM, "direction": direction})
+    assert item.direction == direction
+
+
+def test_ticker_item_invalid_direction_rejected():
+    with pytest.raises(ValidationError):
+        TickerItem(**{**VALID_TICKER_ITEM, "direction": "up"})
+
+
+def test_ticker_item_symbol_required():
+    with pytest.raises(ValidationError):
+        TickerItem(**{k: v for k, v in VALID_TICKER_ITEM.items() if k != "symbol"})
+
+
+def test_ticker_item_price_required():
+    with pytest.raises(ValidationError):
+        TickerItem(**{**VALID_TICKER_ITEM, "price": None})
+
+
+# ---------------------------------------------------------------------------
+# AC2 — IndexItem schema (Epic 6)
+# ---------------------------------------------------------------------------
+
+VALID_INDEX_ITEM = {
+    "name": "SET Index",
+    "value": 1384.52,
+    "change_pct": 0.60,
+    "direction": "positive",
+}
+
+
+def test_index_item_valid_construction():
+    item = IndexItem(**VALID_INDEX_ITEM)
+    assert item.name == "SET Index"
+    assert item.value == 1384.52
+    assert item.direction == "positive"
+
+
+@pytest.mark.parametrize("direction", ["positive", "negative", "neutral"])
+def test_index_item_valid_directions(direction):
+    item = IndexItem(**{**VALID_INDEX_ITEM, "direction": direction})
+    assert item.direction == direction
+
+
+def test_index_item_invalid_direction_rejected():
+    with pytest.raises(ValidationError):
+        IndexItem(**{**VALID_INDEX_ITEM, "direction": "down"})
+
+
+def test_index_item_name_required():
+    with pytest.raises(ValidationError):
+        IndexItem(**{**VALID_INDEX_ITEM, "name": None})
+
+
+# ---------------------------------------------------------------------------
+# AC3 — MarketSnapshot schema (Epic 6)
+# ---------------------------------------------------------------------------
+
+VALID_MARKET_SNAPSHOT = {
+    "indices": [VALID_INDEX_ITEM],
+    "tickers": [VALID_TICKER_ITEM],
+    "market_open": True,
+    "snapshot_at": datetime(2026, 6, 27, 3, 0, tzinfo=timezone.utc),
+}
+
+
+def test_market_snapshot_valid_construction():
+    snap = MarketSnapshot(**VALID_MARKET_SNAPSHOT)
+    assert snap.market_open is True
+    assert len(snap.indices) == 1
+    assert len(snap.tickers) == 1
+    assert snap.snapshot_at.tzinfo is not None
+
+
+def test_market_snapshot_naive_datetime_rejected():
+    data = {**VALID_MARKET_SNAPSHOT, "snapshot_at": datetime(2026, 6, 27, 3, 0)}
+    with pytest.raises(ValidationError):
+        MarketSnapshot(**data)
+
+
+def test_market_snapshot_empty_indices_valid():
+    snap = MarketSnapshot(**{**VALID_MARKET_SNAPSHOT, "indices": []})
+    assert snap.indices == []
+
+
+def test_market_snapshot_market_open_required():
+    with pytest.raises(ValidationError):
+        MarketSnapshot(**{**VALID_MARKET_SNAPSHOT, "market_open": None})
+
+
+# ---------------------------------------------------------------------------
+# AC4 — SectorPerformance schema (new shape, Epic 6)
+# ---------------------------------------------------------------------------
+
+VALID_SECTOR_PERFORMANCE = {
+    "sector_name": "ก่อสร้าง",
+    "change_pct": 2.41,
+    "direction": "positive",
+    "top_article_id": "news-001",
+    "updated_at": datetime(2026, 6, 27, 3, 0, tzinfo=timezone.utc),
+}
+
+
+def test_sector_performance_valid_construction():
+    sp = SectorPerformance(**VALID_SECTOR_PERFORMANCE)
+    assert sp.sector_name == "ก่อสร้าง"
+    assert sp.direction == "positive"
+    assert sp.top_article_id == "news-001"
+    assert sp.updated_at.tzinfo is not None
+
+
+def test_sector_performance_top_article_id_nullable():
+    sp = SectorPerformance(**{**VALID_SECTOR_PERFORMANCE, "top_article_id": None})
+    assert sp.top_article_id is None
+
+
+@pytest.mark.parametrize("direction", ["positive", "negative", "neutral"])
+def test_sector_performance_valid_directions(direction):
+    sp = SectorPerformance(**{**VALID_SECTOR_PERFORMANCE, "direction": direction})
+    assert sp.direction == direction
+
+
+def test_sector_performance_invalid_direction_rejected():
+    with pytest.raises(ValidationError):
+        SectorPerformance(**{**VALID_SECTOR_PERFORMANCE, "direction": "up"})
+
+
+def test_sector_performance_naive_updated_at_rejected():
+    data = {**VALID_SECTOR_PERFORMANCE, "updated_at": datetime(2026, 6, 27, 3, 0)}
+    with pytest.raises(ValidationError):
+        SectorPerformance(**data)
+
+
+def test_sector_performance_sector_name_required():
+    with pytest.raises(ValidationError):
+        SectorPerformance(**{**VALID_SECTOR_PERFORMANCE, "sector_name": None})

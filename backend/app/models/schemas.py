@@ -1,3 +1,4 @@
+import math
 from datetime import date
 from typing import Literal
 
@@ -100,6 +101,12 @@ class MarketOverview(BaseModel):
 
 # --- Epic 6: Market Context Widget schemas ---
 
+def _finite(v: float) -> float:
+    if not math.isfinite(v):
+        raise ValueError("value must be a finite number")
+    return v
+
+
 class TickerItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -107,6 +114,11 @@ class TickerItem(BaseModel):
     price: float
     change_pct: float
     direction: Literal["positive", "negative", "neutral"]
+
+    @field_validator("price", "change_pct")
+    @classmethod
+    def must_be_finite(cls, v: float) -> float:
+        return _finite(v)
 
 
 class IndexItem(BaseModel):
@@ -116,6 +128,11 @@ class IndexItem(BaseModel):
     value: float
     change_pct: float
     direction: Literal["positive", "negative", "neutral"]
+
+    @field_validator("value", "change_pct")
+    @classmethod
+    def must_be_finite(cls, v: float) -> float:
+        return _finite(v)
 
 
 class MarketSnapshot(BaseModel):
