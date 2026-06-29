@@ -1,5 +1,5 @@
 ---
-status: review
+status: done
 epic: 6
 story: 3
 story_key: "6-3-market-overview-widget-component"
@@ -9,7 +9,7 @@ baseline_commit: 229eea312ef6cec4aec7f094872a5a8221455a36
 
 # Story 6.3: MarketOverviewWidget Component
 
-**Status:** review
+**Status:** done
 
 ## Story
 
@@ -85,6 +85,14 @@ So that I understand the macro direction before reading individual news articles
 - [x] Task 5: Validate
   - [x] 5.1 `cd frontend && npx tsc --noEmit` — zero errors
   - [x] 5.2 `cd frontend && npx vitest run` — 181/181 tests pass (12 new MarketOverviewWidget tests + 2 skeleton tests)
+
+### Review Findings
+
+- [x] [Review][Patch] D1 (resolved): `idx.value` uses `toLocaleString()` — replace with `toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })` for controlled decimal precision [MarketOverviewWidget.tsx:95]
+- [x] [Review][Patch] P1: `formatBkkTime` renders "Invalid Date BKK" on malformed `snapshot_at` — guard with `isNaN` check [MarketOverviewWidget.tsx:19-27]
+- [x] [Review][Patch] P2: `MarketOverviewWidgetSkeleton` missing `role="status" aria-label="Loading market indices"` — a11y regression vs previous SkeletonCard fallback [MarketOverviewWidget.tsx:47-63]
+- [x] [Review][Defer] W1: Suspense fallback (`MarketOverviewWidgetSkeleton`) only covers the index card — `SectorHeatmap` and `TrendSummary` have no placeholder skeleton, causing layout shift when sidebar resolves — deferred, pre-existing architecture gap
+- [x] [Review][Defer] W2: AC1 — index name and value use hardcoded hex (`#7D5A44`, `#4A342A`) instead of `cocoa`/`espresso` Tailwind token classes — deferred, pre-existing pattern throughout entire app
 
 ---
 

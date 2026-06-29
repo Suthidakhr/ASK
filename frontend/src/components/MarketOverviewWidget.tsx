@@ -17,8 +17,10 @@ const DIR_ARROW: Record<string, string> = {
 };
 
 function formatBkkTime(isoString: string): string {
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return "—";
   return (
-    new Date(isoString).toLocaleTimeString("en-GB", {
+    d.toLocaleTimeString("en-GB", {
       hour: "2-digit",
       minute: "2-digit",
       timeZone: "Asia/Bangkok",
@@ -46,7 +48,7 @@ function CardHeader() {
 
 export function MarketOverviewWidgetSkeleton() {
   return (
-    <div className={CARD_SHELL} style={CARD_BORDER}>
+    <div className={CARD_SHELL} style={CARD_BORDER} role="status" aria-label="Loading market indices">
       <div className="px-4 py-3 border-b animate-pulse" style={HEADER_BORDER}>
         <div className="h-3 bg-linen rounded w-28" />
       </div>
@@ -92,7 +94,9 @@ export default function MarketOverviewWidget({ snapshot }: Props) {
       )}
       <div className="divide-y" style={{ borderColor: "rgba(74,52,42,0.06)" }}>
         {snapshot.indices.map((idx, i) => {
-          const val = isFinite(idx.value) ? idx.value.toLocaleString() : "—";
+          const val = isFinite(idx.value)
+            ? idx.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            : "—";
           const pct = isFinite(idx.change_pct)
             ? `${idx.change_pct >= 0 ? "+" : ""}${idx.change_pct.toFixed(2)}%`
             : "—";

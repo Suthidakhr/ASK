@@ -96,6 +96,14 @@ describe("MarketOverviewWidget", () => {
     render(<MarketOverviewWidget snapshot={snap} />);
     expect(screen.getAllByText(/—/).length).toBeGreaterThan(0);
   });
+
+  it("malformed snapshot_at renders — not throw when market is closed", () => {
+    render(
+      <MarketOverviewWidget snapshot={{ ...VALID_SNAPSHOT, market_open: false, snapshot_at: "not-a-date" }} />
+    );
+    expect(screen.getByText(/Market closed/)).toBeInTheDocument();
+    expect(screen.getByText(/—/)).toBeInTheDocument();
+  });
 });
 
 describe("MarketOverviewWidgetSkeleton", () => {
@@ -106,5 +114,12 @@ describe("MarketOverviewWidgetSkeleton", () => {
   it("renders pulse row blocks", () => {
     const { container } = render(<MarketOverviewWidgetSkeleton />);
     expect(container.querySelectorAll(".animate-pulse").length).toBeGreaterThan(0);
+  });
+
+  it("has role=status and aria-label for screen readers", () => {
+    const { container } = render(<MarketOverviewWidgetSkeleton />);
+    const el = container.querySelector('[role="status"]');
+    expect(el).toBeInTheDocument();
+    expect(el).toHaveAttribute("aria-label", "Loading market indices");
   });
 });
